@@ -2,4 +2,4 @@
 
 ## 1. 介绍
 
-测试 commit-lint
+测试 commit
