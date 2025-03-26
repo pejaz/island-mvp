@@ -25,6 +25,7 @@
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "jiti": "^2.4.2",
+    "lint-staged": "^15.5.0",
     "ora": "^8.2.0",
     "rollup": "^4.37.0",
     "tsup": "^8.4.0",
@@ -45,5 +46,10 @@
   },
   "bin": {
     "island": "bin/island.js"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,tsx,ts}": [
+      "eslint --fix"
+    ]
   }
 }
