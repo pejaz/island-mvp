@@ -9,7 +9,7 @@
     "build": "tsup",
     "lint": "eslint --fix --ext .ts,.tsx,.js,.jsx ./",
     "preview": "cd build && serve .",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
