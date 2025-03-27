@@ -1,10 +1,12 @@
 import {
+  CLIENT_ENTRY_PATH,
+  SERVER_ENTRY_PATH
+} from "./chunk-DJWYVF4V.mjs";
+import {
   __commonJS,
-  __dirname,
   __toESM,
-  init_esm_shims,
-  resolveConfig
-} from "./chunk-RNC5F3A4.mjs";
+  init_esm_shims
+} from "./chunk-O5ZQ2W4H.mjs";
 
 // node_modules/.pnpm/cli-spinners@2.9.2/node_modules/cli-spinners/spinners.json
 var require_spinners = __commonJS({
@@ -1657,109 +1659,10 @@ init_esm_shims();
 import cac from "cac";
 import { resolve } from "path";
 
-// src/node/dev.ts
-init_esm_shims();
-import { createServer as createViteDevServer } from "vite";
-
-// src/node/plugin-island/indexHtml.ts
-init_esm_shims();
-import { readFile } from "fs/promises";
-
-// src/node/constants/index.ts
-init_esm_shims();
-import { join } from "path";
-var PACKAGE_ROOT = join(__dirname, "..");
-var DEFAULT_TEMPLATE_PATH = join(PACKAGE_ROOT, "template.html");
-var CLIENT_ENTRY_PATH = join(
-  PACKAGE_ROOT,
-  "src/runtime/client-entry.tsx"
-);
-var SERVER_ENTRY_PATH = join(PACKAGE_ROOT, "src/runtime/ssr-entry.tsx");
-
-// src/node/plugin-island/indexHtml.ts
-function pluginIndexHtml() {
-  return {
-    name: "island:index-html",
-    apply: "serve",
-    // 插入入口 script 标签
-    transformIndexHtml(html) {
-      return {
-        html,
-        tags: [
-          {
-            tag: "script",
-            attrs: {
-              type: "module",
-              src: `/@fs/${CLIENT_ENTRY_PATH}`
-            },
-            injectTo: "body"
-          }
-        ]
-      };
-    },
-    configureServer(server) {
-      return () => {
-        server.middlewares.use(async (req, res, next) => {
-          try {
-            let html = await readFile(DEFAULT_TEMPLATE_PATH, "utf-8");
-            html = await server.transformIndexHtml(
-              req.url,
-              html,
-              req.originalUrl
-            );
-            res.statusCode = 200;
-            res.setHeader("Content-Type", "text/html");
-            res.end(html);
-          } catch (e) {
-            return next(e);
-          }
-        });
-      };
-    }
-  };
-}
-
-// src/node/dev.ts
-import pluginReact from "@vitejs/plugin-react";
-
-// src/node/plugin-island/config.ts
-init_esm_shims();
-var SITE_DATA_ID = "island:site-data";
-function pluginConfig(config) {
-  return {
-    name: SITE_DATA_ID,
-    resolveId(id) {
-      if (id === SITE_DATA_ID) {
-        return `\0${SITE_DATA_ID}`;
-      }
-    },
-    load(id) {
-      if (id === `\0${SITE_DATA_ID}`) {
-        return `export default ${JSON.stringify(config.siteData)}`;
-      }
-    }
-  };
-}
-
-// src/node/dev.ts
-async function createDevServer(root = process.cwd()) {
-  const config = await resolveConfig(root, "serve", "development");
-  console.log(">_<\uFF1A ~ createDevServer ~ config:", config.siteData);
-  return createViteDevServer({
-    root,
-    plugins: [pluginIndexHtml(), pluginReact(), pluginConfig(config)],
-    server: {
-      fs: {
-        allow: [PACKAGE_ROOT]
-      }
-    }
-  });
-}
-
 // src/node/build.ts
 init_esm_shims();
 import { build as viteBuild } from "vite";
-import { join as join2 } from "path";
+import { join } from "path";
 import fs from "fs-extra";
 
 // node_modules/.pnpm/ora@8.2.0/node_modules/ora/index.js
@@ -3201,12 +3104,12 @@ async function renderPage(render, root, clientBundle) {
       <script type="module" src="/${clientChunk?.fileName}"></script>
     </body>
   </html>`.trim();
-  await fs.writeFile(join2(root, "build/index.html"), html);
-  await fs.remove(join2(root, ".temp"));
+  await fs.writeFile(join(root, "build/index.html"), html);
+  await fs.remove(join(root, ".temp"));
 }
 async function build(root = process.cwd()) {
   const [clientBundle] = await bundle(root);
-  const serverEntryPath = join2(root, ".temp/ssr-entry.js");
+  const serverEntryPath = join(root, ".temp/ssr-entry.js");
   const { render } = await import(serverEntryPath);
   await renderPage(render, root, clientBundle);
 }
@@ -3215,10 +3118,17 @@ async function build(root = process.cwd()) {
 var cli = cac("island").version("0.0.1").help();
 cli.command("[root]", "start dev server").alias("dev").action(async (root) => {
   console.log("dev", root);
-  root = root ? resolve(root) : process.cwd();
-  const server = await createDevServer(root);
-  await server.listen();
-  server.printUrls();
+  const createServer = async () => {
+    const { createDevServer } = await import("./dev.mjs");
+    root = root ? resolve(root) : process.cwd();
+    const server = await createDevServer(root, async () => {
+      await server.close();
+      await createServer();
+    });
+    await server.listen();
+    server.printUrls();
+  };
+  createServer();
 });
 cli.command("build [root]", "build for production").action(async (root) => {
   console.log("build", root);
