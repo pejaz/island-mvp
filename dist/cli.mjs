@@ -1,43 +1,10 @@
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __esm = (fn, res) => function __init() {
-  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-};
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
-  // If the importer is in node compatibility mode or this is not an ESM
-  // file that has been converted to a CommonJS file using a Babel-
-  // compatible transform (i.e. "__esModule" has not been set), then set
-  // "default" to the CommonJS "module.exports" for node compatibility.
-  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
-  mod
-));
-
-// node_modules/.pnpm/tsup@8.4.0_postcss@8.5.3_typescript@5.8.2/node_modules/tsup/assets/esm_shims.js
-import { fileURLToPath } from "url";
-import path from "path";
-var getFilename, getDirname, __dirname;
-var init_esm_shims = __esm({
-  "node_modules/.pnpm/tsup@8.4.0_postcss@8.5.3_typescript@5.8.2/node_modules/tsup/assets/esm_shims.js"() {
-    getFilename = () => fileURLToPath(import.meta.url);
-    getDirname = () => path.dirname(getFilename());
-    __dirname = /* @__PURE__ */ getDirname();
-  }
-});
+import {
+  __commonJS,
+  __dirname,
+  __toESM,
+  init_esm_shims,
+  resolveConfig
+} from "./chunk-RNC5F3A4.mjs";
 
 // node_modules/.pnpm/cli-spinners@2.9.2/node_modules/cli-spinners/spinners.json
 var require_spinners = __commonJS({
@@ -1754,10 +1721,38 @@ function pluginIndexHtml() {
 
 // src/node/dev.ts
 import pluginReact from "@vitejs/plugin-react";
+
+// src/node/plugin-island/config.ts
+init_esm_shims();
+var SITE_DATA_ID = "island:site-data";
+function pluginConfig(config) {
+  return {
+    name: SITE_DATA_ID,
+    resolveId(id) {
+      if (id === SITE_DATA_ID) {
+        return `\0${SITE_DATA_ID}`;
+      }
+    },
+    load(id) {
+      if (id === `\0${SITE_DATA_ID}`) {
+        return `export default ${JSON.stringify(config.siteData)}`;
+      }
+    }
+  };
+}
+
+// src/node/dev.ts
 async function createDevServer(root = process.cwd()) {
+  const config = await resolveConfig(root, "serve", "development");
+  console.log(">_<\uFF1A ~ createDevServer ~ config:", config.siteData);
   return createViteDevServer({
     root,
-    plugins: [pluginIndexHtml(), pluginReact()]
+    plugins: [pluginIndexHtml(), pluginReact(), pluginConfig(config)],
+    server: {
+      fs: {
+        allow: [PACKAGE_ROOT]
+      }
+    }
   });
 }
 
