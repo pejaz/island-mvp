@@ -38,6 +38,6 @@ export interface UserConfig {
 
 export interface SiteConfig {
   root: string
-  configPath: string
+  configPaths: string[]
   siteData: UserConfig
 }

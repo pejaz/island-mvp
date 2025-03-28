@@ -4,11 +4,20 @@ import { join } from 'path'
 import type { RollupOutput } from 'rollup'
 import fs from 'fs-extra'
 import ora from 'ora'
+import { SiteConfig } from 'shared/types'
+import { pluginConfig } from './plugin-island/config'
+import pluginReact from '@vitejs/plugin-react'
 
-export async function bundle(root: string) {
+export async function bundle(root: string, config: SiteConfig) {
   const resolveViteConfig = (isServer: boolean): InlineConfig => ({
     mode: 'production',
     root,
+    plugins: [pluginReact(), pluginConfig(config)],
+    ssr: {
+      // 注意加上这个配置，防止 cjs 产物中 require ESM 的产物，因为 react-router-dom 的产物为 ESM 格式
+      // 这样配置后会把 react-router-dom 的产物一起打包进产物中，就不需要去 require 第三方 esm 模块了
+      noExternal: ['react-router-dom'],
+    },
     build: {
       ssr: isServer,
       outDir: isServer ? '.temp' : 'build',
@@ -74,9 +83,9 @@ export async function renderPage(
   await fs.remove(join(root, '.temp'))
 }
 
-export async function build(root: string = process.cwd()) {
+export async function build(root: string = process.cwd(), config: SiteConfig) {
   // 1. bundle -> client 端 + server 端
-  const [clientBundle] = await bundle(root)
+  const [clientBundle] = await bundle(root, config)
   // 2. 引入 ssr-entry 服务端模块
   const serverEntryPath = join(root, '.temp/ssr-entry.js')
   // 3. 服务端渲染，产出 HTML String -> fs  HTML 产物输出到磁盘

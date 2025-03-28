@@ -26,7 +26,7 @@ export async function resolveUserConfig(
   root: string,
   command: 'serve' | 'build',
   mode: 'development' | 'production'
-) {
+): Promise<[string[], UserConfig]> {
   // 1. 获取配置文件路径
   const configPath = getUserConfigPath(root)
   // 2. 读取配置文件的内容
@@ -40,7 +40,8 @@ export async function resolveUserConfig(
   )
 
   if (result) {
-    const { config: rawConfig = {} as RawConfig } = result
+    console.log('>_<： ~ result:', result)
+    const { config: rawConfig = {} as RawConfig, dependencies } = result
     // 三种情况:
     // 1. object
     // 2. promise
@@ -48,9 +49,13 @@ export async function resolveUserConfig(
     const userConfig = await (typeof rawConfig === 'function'
       ? rawConfig()
       : rawConfig)
-    return [configPath, userConfig] as const
+
+    // 处理配置文件的依赖的热更新(只考虑 docs 文件夹下的依赖)，而不是指热更新配置文件 configPath
+    const configPaths = dependencies.filter((file) => file.startsWith('docs'))
+
+    return [configPaths, userConfig as UserConfig]
   } else {
-    return [configPath, {} as UserConfig] as const
+    return [[configPath], {} as UserConfig]
   }
 }
 
@@ -59,10 +64,10 @@ export async function resolveConfig(
   command: 'serve' | 'build',
   mode: 'development' | 'production'
 ) {
-  const [configPath, userConfig] = await resolveUserConfig(root, command, mode)
+  const [configPaths, userConfig] = await resolveUserConfig(root, command, mode)
   const siteConfig: SiteConfig = {
     root,
-    configPath,
+    configPaths,
     siteData: resolveSiteDate(userConfig as UserConfig),
   }
 

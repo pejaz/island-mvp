@@ -1,5 +1,6 @@
 import { defineConfig } from '../dist'
+import { getConfig } from './util'
 
-export default defineConfig({
-  title: 'My Documentation111',
-})
+export default defineConfig(getConfig({
+  describe: 'Island SSG Framework111',
+}))

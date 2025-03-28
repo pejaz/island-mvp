@@ -1,6 +1,7 @@
 import cac from 'cac'
 import { resolve } from 'path'
 import { build } from './build'
+import { resolveConfig } from './config'
 // import { version } from '../../package.json'
 // const version = require('../../package.json').version
 const cli = cac('island').version('0.0.1').help()
@@ -30,7 +31,8 @@ cli
     console.log('build', root)
     try {
       root = resolve(root)
-      build(root)
+      const config = await resolveConfig(root, 'build', 'production')
+      build(root, config)
     } catch (error) {
       console.log(error)
     }
