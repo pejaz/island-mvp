@@ -1,18 +1,17 @@
-import { InlineConfig, build as viteBuild } from 'vite'
-import { CLIENT_ENTRY_PATH, SERVER_ENTRY_PATH } from './constants'
-import { join } from 'path'
-import type { RollupOutput } from 'rollup'
 import fs from 'fs-extra'
 import ora from 'ora'
+import { join } from 'path'
+import type { RollupOutput } from 'rollup'
 import { SiteConfig } from 'shared/types'
-import { pluginConfig } from './plugin-island/config'
-import pluginReact from '@vitejs/plugin-react'
+import { InlineConfig, build as viteBuild } from 'vite'
+import { CLIENT_ENTRY_PATH, SERVER_ENTRY_PATH } from './constants'
+import { createVitePlugins } from './vitePlugins'
 
 export async function bundle(root: string, config: SiteConfig) {
   const resolveViteConfig = (isServer: boolean): InlineConfig => ({
     mode: 'production',
     root,
-    plugins: [pluginReact({ jsxRuntime: 'automatic' }), pluginConfig(config)],
+    plugins: createVitePlugins(config),
     ssr: {
       // 注意加上这个配置，防止 cjs 产物中 require ESM 的产物，因为 react-router-dom 的产物为 ESM 格式
       // 这样配置后会把 react-router-dom 的产物一起打包进产物中，就不需要去 require 第三方 esm 模块了
