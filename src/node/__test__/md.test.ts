@@ -19,7 +19,7 @@ describe('Markdown compile cases', async () => {
     .use(rehypePluginShiki, {
       highlighter: await createHighlighter({
         themes: ['nord'],
-        langs: ['js'],
+        langs: ['ts', 'js'],
       }),
     })
     .use(rehypeStringify)

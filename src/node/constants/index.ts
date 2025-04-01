@@ -8,3 +8,4 @@ export const CLIENT_ENTRY_PATH = join(
   'src/runtime/client-entry.tsx'
 )
 export const SERVER_ENTRY_PATH = join(PACKAGE_ROOT, 'src/runtime/ssr-entry.tsx')
+export const MD_REGEX = /\.mdx?$/
