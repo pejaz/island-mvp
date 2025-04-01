@@ -11,7 +11,7 @@ export async function bundle(root: string, config: SiteConfig) {
   const resolveViteConfig = (isServer: boolean): InlineConfig => ({
     mode: 'production',
     root,
-    plugins: createVitePlugins(config),
+    plugins: createVitePlugins(Object.assign(config, { isSSR: isServer })),
     ssr: {
       // 注意加上这个配置，防止 cjs 产物中 require ESM 的产物，因为 react-router-dom 的产物为 ESM 格式
       // 这样配置后会把 react-router-dom 的产物一起打包进产物中，就不需要去 require 第三方 esm 模块了

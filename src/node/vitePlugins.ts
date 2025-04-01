@@ -6,7 +6,7 @@ import { SiteConfig } from 'shared/types'
 import { createPluginMdx } from './plugin-mdx'
 
 export function createVitePlugins(
-  config: SiteConfig,
+  config: SiteConfig & { isSSR?: boolean },
   restartServer?: () => Promise<void>
 ) {
   return [
@@ -17,6 +17,7 @@ export function createVitePlugins(
     pluginConfig(config, restartServer),
     pluginRoutes({
       root: config.root,
+      isSSR: config.isSSR,
     }),
     createPluginMdx(),
   ]

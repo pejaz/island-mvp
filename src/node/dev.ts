@@ -11,7 +11,10 @@ export async function createDevServer(
 
   return createViteDevServer({
     root: PACKAGE_ROOT, // 移至 pluginConfig 中的 config 钩子
-    plugins: createVitePlugins(config, restart),
+    plugins: createVitePlugins(
+      Object.assign(config, { isSSR: false }),
+      restart
+    ),
     // server: {
     //   fs: {
     //     allow: [PACKAGE_ROOT],
