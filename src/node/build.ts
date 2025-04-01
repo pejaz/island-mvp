@@ -1,11 +1,12 @@
 import fs from 'fs-extra'
 import ora from 'ora'
-import { join } from 'path'
+import { dirname, join } from 'path'
 import type { RollupOutput } from 'rollup'
 import { SiteConfig } from 'shared/types'
 import { InlineConfig, build as viteBuild } from 'vite'
 import { CLIENT_ENTRY_PATH, SERVER_ENTRY_PATH } from './constants'
 import { createVitePlugins } from './vitePlugins'
+import type { RouteObject } from 'react-router-dom'
 
 export async function bundle(root: string, config: SiteConfig) {
   const resolveViteConfig = (isServer: boolean): InlineConfig => ({
@@ -19,7 +20,7 @@ export async function bundle(root: string, config: SiteConfig) {
     },
     build: {
       ssr: isServer,
-      outDir: isServer ? '.temp' : 'build',
+      outDir: isServer ? join(root, '.temp') : join(root, 'build'),
       rollupOptions: {
         input: isServer ? SERVER_ENTRY_PATH : CLIENT_ENTRY_PATH,
         output: {
@@ -56,15 +57,20 @@ export async function bundle(root: string, config: SiteConfig) {
 }
 
 export async function renderPage(
-  render: () => string,
+  render: (path: string) => string,
+  routes: RouteObject[],
   root: string,
   clientBundle: RollupOutput
 ) {
-  const appHtml = render()
   const clientChunk = clientBundle.output.find(
     (chunk) => chunk.type === 'chunk' && chunk.isEntry
   )
-  const html = `
+  await Promise.all(
+    routes.map(async (route) => {
+      const routePath = route.path
+      const appHtml = render(routePath)
+
+      const html = `
   <!DOCTYPE html>
   <html>
     <head>
@@ -78,7 +84,15 @@ export async function renderPage(
       <script type="module" src="/${clientChunk?.fileName}"></script>
     </body>
   </html>`.trim()
-  await fs.writeFile(join(root, 'build/index.html'), html)
+
+      const fileName = routePath.endsWith('/')
+        ? `${routePath}index.html`
+        : `${routePath}.html`
+      await fs.ensureDir(join(root, 'build', dirname(fileName)))
+      await fs.writeFile(join(root, 'build', fileName), html)
+    })
+  )
+
   await fs.remove(join(root, '.temp'))
 }
 
@@ -88,6 +102,6 @@ export async function build(root: string = process.cwd(), config: SiteConfig) {
   // 2. 引入 ssr-entry 服务端模块
   const serverEntryPath = join(root, '.temp/ssr-entry.js')
   // 3. 服务端渲染，产出 HTML String -> fs  HTML 产物输出到磁盘
-  const { render } = await import(serverEntryPath)
-  await renderPage(render, root, clientBundle)
+  const { render, routes } = await import(serverEntryPath)
+  await renderPage(render, routes, root, clientBundle)
 }
