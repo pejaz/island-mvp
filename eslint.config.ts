@@ -39,8 +39,9 @@ export default tseslint.config(
       'react/jsx-uses-vars': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-
+      'react/no-unknown-property': 'off',
       'comma-dangle': ['error', 'only-multiline'],
+      '@typescript-eslint/no-empty-object-type': 'off',
     },
   },
 

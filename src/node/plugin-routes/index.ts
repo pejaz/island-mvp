@@ -1,11 +1,19 @@
 import { Plugin } from 'vite'
 import { RouteService } from './RouteService'
+import type { PageModule } from 'shared/index'
 
 // 本质: 把文件目录结构 -> 路由数据
 
 interface PluginOptions {
   root: string
   isSSR: boolean
+}
+
+export interface Route {
+  path: string
+  element: React.ReactElement
+  filePath: string
+  preload: () => Promise<PageModule>
 }
 
 export const CONVENTIONAL_ROUTE_ID = 'island:routes'
