@@ -1,9 +1,11 @@
 import { PACKAGE_ROOT } from 'node/constants'
-import { join, relative } from 'path'
+import path, { join, relative } from 'path'
 import { SiteConfig } from 'shared/types/index'
 import { Plugin } from 'vite'
-
+import sirv from 'sirv'
+import fs from 'fs-extra'
 const SITE_DATA_ID = 'island:site-data'
+const PUBLIC_DIR = 'public'
 
 export function pluginConfig(
   config: SiteConfig,
@@ -21,6 +23,17 @@ export function pluginConfig(
             '@runtime': join(PACKAGE_ROOT, 'src', 'runtime', 'index.ts'),
           },
         },
+        css: {
+          modules: {
+            localsConvention: 'camelCaseOnly',
+          },
+        },
+      }
+    },
+    configureServer(server) {
+      const publicDir = path.join(config.root, PUBLIC_DIR)
+      if (fs.pathExistsSync(publicDir)) {
+        server.middlewares.use(sirv(publicDir))
       }
     },
     resolveId(id) {

@@ -10,7 +10,7 @@ export async function createDevServer(
   const config = await resolveConfig(root, 'serve', 'development')
 
   return createViteDevServer({
-    root: PACKAGE_ROOT, // 移至 pluginConfig 中的 config 钩子
+    root: PACKAGE_ROOT, // 可以移至 pluginConfig 中的 config 钩子
     plugins: createVitePlugins(
       Object.assign(config, { isSSR: false }),
       restart

@@ -1,6 +1,6 @@
 import { Plugin } from 'vite'
 import { RouteService } from './RouteService'
-import type { PageModule } from 'shared/index'
+import type { PageModule } from 'shared/types'
 
 // 本质: 把文件目录结构 -> 路由数据
 

@@ -14,7 +14,7 @@ export async function initPageData(routePath: string): Promise<PageData> {
     const moduleInfo = await (matched[0].route as Route).preload()
 
     return {
-      pageType: 'doc',
+      pageType: moduleInfo.frontmatter?.pageType ?? 'doc',
       siteData,
       frontmatter: moduleInfo.frontmatter,
       pagePath: routePath,

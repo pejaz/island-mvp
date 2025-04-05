@@ -1,5 +1,10 @@
 import { usePageData } from '@runtime'
 import 'uno.css'
+import '../styles/base.css'
+import '../styles/vars.css'
+import { Nav } from '../components/Nav'
+import { HomeLayout } from './HomeLayout'
+import { DocLayout } from './DocLayout'
 
 export function Layout() {
   const pageData = usePageData()
@@ -7,8 +12,10 @@ export function Layout() {
   const { pageType } = pageData
   // 根据 pageType 分发不同的页面内容
   const getContent = () => {
-    if (pageType === 'doc') {
-      return <div>正文页面</div>
+    if (pageType === 'home') {
+      return <HomeLayout />
+    } else if (pageType === 'doc') {
+      return <DocLayout />
     } else {
       return <div>404 页面</div>
     }
@@ -16,10 +23,7 @@ export function Layout() {
 
   return (
     <div>
-      <h1 p="2" m="4" className="bg-red-500">
-        Common Content
-      </h1>
-      <h1>Doc Content</h1>
+      <Nav />
       <div>{getContent()}</div>
     </div>
   )
