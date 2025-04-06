@@ -2,7 +2,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
-    "module": "CommonJS" /* Specify what module code is generated. */,
+    "module": "ESNext" /* Specify what module code is generated. */,
     "rootDir": "." /* Specify the root folder within your source files. */,
     // "moduleResolution": "NodeNext",
     // // 如果使用 "bundler"，建议启用以下选项：
@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "jsx": "react-jsx",
     "baseUrl": "src",
+    "moduleResolution": "node",
     "esModuleInterop": true, // 在 ESM 语法中导入 CJS 模块时通常需要加上这个配置，详情:https://link.juejin.cn/?target=https%3A%2F%2Fwww.typescriptlang.org%2Ftsconfig%2F%23esModuleInterop
     "paths": {
       "shared/*": [

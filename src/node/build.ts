@@ -16,7 +16,7 @@ export async function bundle(root: string, config: SiteConfig) {
     ssr: {
       // 注意加上这个配置，防止 cjs 产物中 require ESM 的产物，因为 react-router-dom 的产物为 ESM 格式
       // 这样配置后会把 react-router-dom 的产物一起打包进产物中，就不需要去 require 第三方 esm 模块了
-      noExternal: ['react-router-dom'],
+      noExternal: ['react-router-dom', 'lodash-es'],
     },
     build: {
       ssr: isServer,
@@ -68,7 +68,7 @@ export async function renderPage(
   await Promise.all(
     routes.map(async (route) => {
       const routePath = route.path
-      const appHtml = render(routePath)
+      const appHtml = await render(routePath)
 
       const html = `
   <!DOCTYPE html>

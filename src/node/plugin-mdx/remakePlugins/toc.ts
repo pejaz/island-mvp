@@ -17,13 +17,12 @@ interface ChildNode {
   children?: ChildNode[]
 }
 
-// 写在顶层即可
-const slugger = new Slugger()
-
 export const remarkPluginToc: Plugin<[], Root> = () => {
   return (tree) => {
     // 初始化 toc 数组
     const toc: TocItem[] = []
+    // 每次编译时都重新进行实例的初始化
+    const slugger = new Slugger()
 
     visit(tree, 'heading', (node) => {
       if (!node.depth || !node.children) {
