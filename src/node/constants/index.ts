@@ -9,3 +9,5 @@ export const CLIENT_ENTRY_PATH = join(
 )
 export const SERVER_ENTRY_PATH = join(PACKAGE_ROOT, 'src/runtime/ssr-entry.tsx')
 export const MD_REGEX = /\.mdx?$/
+
+export const MASK_SPLITTER = '!!ISLAND!!'

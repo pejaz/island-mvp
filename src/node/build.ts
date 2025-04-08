@@ -1,12 +1,19 @@
 import fs from 'fs-extra'
 import ora from 'ora'
-import { dirname, join } from 'path'
+import path, { dirname, join } from 'path'
 import type { RollupOutput } from 'rollup'
 import { SiteConfig } from 'shared/types'
 import { InlineConfig, build as viteBuild } from 'vite'
-import { CLIENT_ENTRY_PATH, SERVER_ENTRY_PATH } from './constants'
+import {
+  CLIENT_ENTRY_PATH,
+  MASK_SPLITTER,
+  SERVER_ENTRY_PATH,
+} from './constants'
 import { createVitePlugins } from './vitePlugins'
 import type { RouteObject } from 'react-router-dom'
+import type { ssrRenderReturn } from 'runtime/ssr-entry'
+
+const CLIENT_OUTPUT = 'build'
 
 export async function bundle(root: string, config: SiteConfig) {
   const resolveViteConfig = (isServer: boolean): InlineConfig => ({
@@ -20,7 +27,7 @@ export async function bundle(root: string, config: SiteConfig) {
     },
     build: {
       ssr: isServer,
-      outDir: isServer ? join(root, '.temp') : join(root, 'build'),
+      outDir: isServer ? join(root, '.temp') : join(root, CLIENT_OUTPUT),
       rollupOptions: {
         input: isServer ? SERVER_ENTRY_PATH : CLIENT_ENTRY_PATH,
         output: {
@@ -57,7 +64,7 @@ export async function bundle(root: string, config: SiteConfig) {
 }
 
 export async function renderPage(
-  render: (path: string) => string,
+  render: (path: string) => Promise<ssrRenderReturn>,
   routes: RouteObject[],
   root: string,
   clientBundle: RollupOutput
@@ -65,11 +72,16 @@ export async function renderPage(
   const clientChunk = clientBundle.output.find(
     (chunk) => chunk.type === 'chunk' && chunk.isEntry
   )
+  const styleAssets = clientBundle.output.filter(
+    (chunk) => chunk.type === 'asset' && chunk.fileName.endsWith('.css')
+  )
   await Promise.all(
     routes.map(async (route) => {
       const routePath = route.path
-      const appHtml = await render(routePath)
-
+      const { appHtml, islandToPathMap, islandProps } = await render(routePath)
+      const islandBundle = await buildIslands(root, islandToPathMap)
+      // 也可以通过产物的 fileName 属性来注入
+      const islandsCode = (islandBundle as RollupOutput).output[0].code
       const html = `
   <!DOCTYPE html>
   <html>
@@ -78,22 +90,27 @@ export async function renderPage(
       <meta name="viewport" content="width=device-width,initial-scale=1">
       <title>title</title>
       <meta name="description" content="xxx">
+      ${styleAssets
+        .map((item) => `<link rel="stylesheet" href="/${item.fileName}">`)
+        .join('\n')}
     </head>
     <body>
       <div id="root">${appHtml}</div>
+       <script type="module">${islandsCode}</script>
       <script type="module" src="/${clientChunk?.fileName}"></script>
+      <script id="island-props">${JSON.stringify(islandProps)}</script>
     </body>
   </html>`.trim()
 
       const fileName = routePath.endsWith('/')
         ? `${routePath}index.html`
         : `${routePath}.html`
-      await fs.ensureDir(join(root, 'build', dirname(fileName)))
-      await fs.writeFile(join(root, 'build', fileName), html)
+      await fs.ensureDir(join(root, CLIENT_OUTPUT, dirname(fileName)))
+      await fs.writeFile(join(root, CLIENT_OUTPUT, fileName), html)
     })
   )
 
-  await fs.remove(join(root, '.temp'))
+  // await fs.remove(join(root, '.temp'))
 }
 
 export async function build(root: string = process.cwd(), config: SiteConfig) {
@@ -104,4 +121,72 @@ export async function build(root: string = process.cwd(), config: SiteConfig) {
   // 3. 服务端渲染，产出 HTML String -> fs  HTML 产物输出到磁盘
   const { render, routes } = await import(serverEntryPath)
   await renderPage(render, routes, root, clientBundle)
+}
+
+/**
+ * { Aside: 'xxx' }
+ * 编译后：
+ * import { Aside } from 'xxx'
+ * window.ISLANDS = { Aside }
+ * window.ISLAND_PROPS = JSON.parse(
+ *   document.getElementById('island-props').textContent
+ */
+async function buildIslands(
+  root: string,
+  islandPathToMap: Record<string, string>
+) {
+  // 根据 islandPathToMap 拼接模块代码内容
+  const islandsInjectCode = `
+    ${Object.entries(islandPathToMap)
+      .map(
+        ([islandName, islandPath]) =>
+          `import { ${islandName} } from '${islandPath}'`
+      )
+      .join(';')}
+window.ISLANDS = { ${Object.keys(islandPathToMap).join(', ')} };
+window.ISLAND_PROPS = JSON.parse(
+  document.getElementById('island-props').textContent
+);
+  `
+  const injectId = 'island:inject'
+  return viteBuild({
+    mode: 'production',
+    build: {
+      // 输出目录
+      outDir: path.join(root, '.temp'),
+      rollupOptions: {
+        input: injectId,
+      },
+    },
+    plugins: [
+      // 重点插件，用来加载我们拼接的 Islands 注册模块的代码
+      {
+        name: 'island:inject',
+        enforce: 'post',
+        resolveId(id) {
+          if (id.includes(MASK_SPLITTER)) {
+            const [originId, importer] = id.split(MASK_SPLITTER)
+            return this.resolve(originId, importer, { skipSelf: true })
+          }
+
+          if (id === injectId) {
+            return `\0:${injectId}`
+          }
+        },
+        load(id) {
+          if (id === `\0:${injectId}`) {
+            return islandsInjectCode
+          }
+        },
+        // 对于 Islands Bundle，我们只需要 JS 即可，其它资源文件可以删除
+        generateBundle(_, bundle) {
+          for (const name in bundle) {
+            if (bundle[name].type === 'asset') {
+              delete bundle[name]
+            }
+          }
+        },
+      },
+    ],
+  })
 }

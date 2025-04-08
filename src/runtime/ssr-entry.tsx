@@ -3,17 +3,36 @@ import { renderToString } from 'react-dom/server'
 import { StaticRouter } from 'react-router-dom'
 import { DataContext } from './hooks'
 
+export interface ssrRenderReturn {
+  appHtml: string
+  islandProps: string[]
+  islandToPathMap: {
+    __island: string
+  }
+}
+
 // For ssr component render
-export async function render(pagePath: string) {
+export async function render(pagePath: string): Promise<ssrRenderReturn> {
   // 生产 pageData
   const pageData = await initPageData(pagePath)
-  return renderToString(
+  const { clearIslandData, data } = await import('./jsx-runtime')
+  // 拿到 islands 组件相关数据
+  const { islandProps, islandToPathMap } = data
+  clearIslandData()
+
+  const appHtml = renderToString(
     <DataContext.Provider value={pageData}>
       <StaticRouter location={pagePath}>
         <App />
       </StaticRouter>
     </DataContext.Provider>
   )
+
+  return {
+    appHtml,
+    islandProps,
+    islandToPathMap,
+  }
 }
 
 // 导出路由数据

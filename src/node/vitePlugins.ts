@@ -6,6 +6,9 @@ import { SiteConfig } from 'shared/types'
 import { createPluginMdx } from './plugin-mdx'
 import pluginUnocss from 'unocss/vite'
 import unocssOptions from './unocssOptions'
+import { PACKAGE_ROOT } from './constants'
+import path from 'path'
+import babelPluginIsland from './babel-plugin-island'
 
 export function createVitePlugins(
   config: SiteConfig & { isSSR?: boolean },
@@ -16,6 +19,12 @@ export function createVitePlugins(
     pluginIndexHtml(),
     pluginReact({
       jsxRuntime: 'automatic',
+      jsxImportSource: config.isSSR
+        ? path.join(PACKAGE_ROOT, 'src', 'runtime') // react会自动在这个路径下寻找jsx-runtime.js 文件
+        : 'react',
+      babel: {
+        plugins: [babelPluginIsland],
+      },
     }),
     pluginConfig(config, restartServer),
     pluginRoutes({
