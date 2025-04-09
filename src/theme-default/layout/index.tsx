@@ -6,11 +6,13 @@ import '../styles/doc.css'
 import { Nav } from '../components/Nav'
 import { HomeLayout } from './HomeLayout'
 import { DocLayout } from './DocLayout'
+import { Helmet } from 'react-helmet-async'
+import { NotFoundLayout } from './NotFoundLayout'
 
 export function Layout() {
   const pageData = usePageData()
   // 获取 pageType
-  const { pageType } = pageData
+  const { pageType, title } = pageData
   // 根据 pageType 分发不同的页面内容
   const getContent = () => {
     if (pageType === 'home') {
@@ -18,12 +20,15 @@ export function Layout() {
     } else if (pageType === 'doc') {
       return <DocLayout />
     } else {
-      return <div>404 页面</div>
+      return <NotFoundLayout />
     }
   }
 
   return (
     <div>
+      <Helmet>
+        <title>{title}</title>
+      </Helmet>
       <Nav />
       <section
         style={{

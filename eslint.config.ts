@@ -71,6 +71,7 @@ export default tseslint.config(
       '*.json',
       'docs',
       'bin',
+      'vendors',
     ],
   }
 )

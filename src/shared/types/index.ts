@@ -66,6 +66,7 @@ export interface PageData {
   pagePath: string
   frontmatter: FrontMatter
   pageType: PageType
+  title: string
   toc?: Header[]
 }
 
@@ -73,6 +74,7 @@ export interface PageModule {
   default: ComponentType
   frontmatter?: FrontMatter
   toc?: Header[]
+  title?: string
   [key: string]: unknown
 }
 
