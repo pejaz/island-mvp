@@ -1,21 +1,14 @@
 import compression from 'compression'
 import polka from 'polka'
 import path from 'path'
-// import { resolveConfig } from './config'
-import fs from 'fs-extra'
 import sirv from 'sirv'
 
 const DEFAULT_PORT = 4173
 
 export async function preview(root: string, { port }: { port?: number }) {
-  // 需要用户自定义输出目录的时候可以从 config 中读取
-  // const config = await resolveConfig(root, 'serve', 'production')
   const listenPort = port ?? DEFAULT_PORT
   const outputDir = path.resolve(root, 'build')
-  const notFoundPage = fs.readFileSync(
-    path.resolve(outputDir, '404.html'),
-    'utf-8'
-  )
+
   const compress = compression()
 
   // 静态资源服务
@@ -32,7 +25,7 @@ export async function preview(root: string, { port }: { port?: number }) {
 
   const onNoMatch: polka.Options['onNoMatch'] = (req, res) => {
     res.statusCode = 404
-    res.end(notFoundPage)
+    res.end("404 Not Found")
   }
 
   polka({ onNoMatch })

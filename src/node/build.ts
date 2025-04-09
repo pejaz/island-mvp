@@ -14,7 +14,6 @@ import {
 import { createVitePlugins } from './vitePlugins'
 import type { RouteObject } from 'react-router-dom'
 import type { ssrRenderReturn } from 'runtime/ssr-entry'
-import type { HelmetData } from 'react-helmet-async'
 
 const CLIENT_OUTPUT = 'build'
 
@@ -33,7 +32,7 @@ export async function bundle(root: string, config: SiteConfig) {
       ssr: isServer,
       outDir: isServer ? join(root, '.temp') : join(root, CLIENT_OUTPUT),
       rollupOptions: {
-        treeshake: false,
+        treeshake: false, // work build css module to bundle asset
         input: isServer ? SERVER_ENTRY_PATH : CLIENT_ENTRY_PATH,
         output: {
           format: isServer ? 'cjs' : 'esm',
@@ -63,12 +62,6 @@ export async function bundle(root: string, config: SiteConfig) {
 
     spinner.succeed('Build client + server bundles successfully!')
 
-    // 复制 public 目录到输出目录，避免静态资源缺失，新版本 viteBuild 会自动处理，忽略
-    // const publicDir = join(root, 'public')
-    // if (await fs.pathExists(publicDir)) {
-    //   await fs.copy(publicDir, join(root, CLIENT_OUTPUT))
-    // }
-
     // 复制 vendors 目录到输出目录
     await fs.copy(join(PACKAGE_ROOT, 'vendors'), join(root, CLIENT_OUTPUT))
     return [clientBundle, serverBundle] as [RollupOutput, RollupOutput]
@@ -82,10 +75,7 @@ const normalizeVendorFilename = (fileName: string) =>
   fileName.replace(/\//g, '_') + '.js'
 
 export async function renderPage(
-  render: (
-    path: string,
-    helmetContext: HelmetData['context']
-  ) => Promise<ssrRenderReturn>,
+  render: ( path: string) => Promise<ssrRenderReturn>,
   routes: RouteObject[],
   root: string,
   clientBundle: RollupOutput
@@ -96,22 +86,13 @@ export async function renderPage(
   const styleAssets = clientBundle.output.filter(
     (chunk) => chunk.type === 'asset' && chunk.fileName.endsWith('.css')
   )
-  const tasks = [
-    ...routes,
-    {
-      path: '/404',
-    },
-  ].map((route) => async () => {
+  const tasks = routes.map((route) => async () => {
     const routePath = route.path
-    const helmetContext = {
-      context: {},
-    } as HelmetData
     const {
       appHtml,
       islandToPathMap,
       islandProps = [],
-    } = await render(routePath, helmetContext.context)
-    const { helmet } = helmetContext.context
+    } = await render(routePath)
     const islandBundle = await buildIslands(root, islandToPathMap)
     // 也可以通过产物的 fileName 属性来注入
     const islandsCode = (islandBundle as RollupOutput).output[0].code
@@ -121,10 +102,7 @@ export async function renderPage(
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    ${helmet?.title?.toString() || ''}
-    ${helmet?.meta?.toString() || ''}
-    ${helmet?.link?.toString() || ''}
-    ${helmet?.style?.toString() || ''}
+    <title>title</title>
     <meta name="description" content="xxx">
     ${styleAssets
       .map((item) => `<link rel="stylesheet" href="/${item.fileName}">`)

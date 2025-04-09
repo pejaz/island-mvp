@@ -3,9 +3,6 @@ import pluginReact from '@vitejs/plugin-react'
 import { pluginConfig } from './plugin-island/config'
 import { pluginRoutes } from './plugin-routes'
 import { SiteConfig } from 'shared/types'
-import { createPluginMdx } from './plugin-mdx'
-import pluginUnocss from 'unocss/vite'
-import unocssOptions from './unocssOptions'
 import { PACKAGE_ROOT } from './constants'
 import path from 'path'
 import babelPluginIsland from './babel-plugin-island'
@@ -15,7 +12,6 @@ export function createVitePlugins(
   restartServer?: () => Promise<void>
 ) {
   return [
-    pluginUnocss(unocssOptions),
     pluginIndexHtml(),
     pluginReact({
       jsxRuntime: 'automatic',
@@ -31,6 +27,5 @@ export function createVitePlugins(
       root: config.root,
       isSSR: config.isSSR,
     }),
-    createPluginMdx(),
   ]
 }

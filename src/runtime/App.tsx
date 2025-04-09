@@ -14,11 +14,8 @@ export async function initPageData(routePath: string): Promise<PageData> {
     const moduleInfo = await (matched[0].route as Route).preload()
 
     return {
-      pageType: moduleInfo.frontmatter?.pageType ?? 'doc',
+      pageType: 'home',
       siteData,
-      frontmatter: moduleInfo.frontmatter,
-      toc: moduleInfo.toc,
-      title: moduleInfo.title,
       pagePath: routePath,
     }
   }
@@ -26,9 +23,6 @@ export async function initPageData(routePath: string): Promise<PageData> {
     pageType: '404',
     siteData,
     pagePath: routePath,
-    toc: [],
-    title: '404',
-    frontmatter: {},
   }
 }
 

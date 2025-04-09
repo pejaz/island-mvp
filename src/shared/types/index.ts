@@ -64,10 +64,7 @@ export interface FrontMatter {
 export interface PageData {
   siteData: UserConfig
   pagePath: string
-  frontmatter: FrontMatter
   pageType: PageType
-  title: string
-  toc?: Header[]
 }
 
 export interface PageModule {

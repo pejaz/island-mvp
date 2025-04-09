@@ -1,42 +1,22 @@
-import { usePageData } from '@runtime'
-import 'uno.css'
+import { Content } from '@runtime'
+import { Island } from '../components/Island'
 import '../styles/base.css'
 import '../styles/vars.css'
-import '../styles/doc.css'
-import { Nav } from '../components/Nav'
-import { HomeLayout } from './HomeLayout'
-import { DocLayout } from './DocLayout'
-import { Helmet } from 'react-helmet-async'
-import { NotFoundLayout } from './NotFoundLayout'
+import styles from './index.module.scss' // not build in bundle aseet
 
 export function Layout() {
-  const pageData = usePageData()
-  // 获取 pageType
-  const { pageType, title } = pageData
-  // 根据 pageType 分发不同的页面内容
-  const getContent = () => {
-    if (pageType === 'home') {
-      return <HomeLayout />
-    } else if (pageType === 'doc') {
-      return <DocLayout />
-    } else {
-      return <NotFoundLayout />
-    }
-  }
-
   return (
-    <div>
-      <Helmet>
-        <title>{title}</title>
-      </Helmet>
-      <Nav />
+    <div className={styles.treeShakeColor}>
       <section
         style={{
           paddingTop: 'var(--island-nav-height)',
         }}
       >
-        {getContent()}
+        <Island __island>
+          demo test vite css 
+        </Island>
       </section>
+      <Content />
     </div>
   )
 }
