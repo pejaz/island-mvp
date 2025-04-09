@@ -2,6 +2,7 @@ import cac from 'cac'
 import { resolve } from 'path'
 import { build } from './build'
 import { resolveConfig } from './config'
+import { preview } from './preview'
 // import { version } from '../../package.json'
 // const version = require('../../package.json').version
 const cli = cac('island').version('0.0.1').help()
@@ -35,6 +36,18 @@ cli
       build(root, config)
     } catch (error) {
       console.log(error)
+    }
+  })
+
+cli
+  .command('preview [root]', 'preview production build')
+  .option('--port <port>', 'port to use for preview server')
+  .action(async (root: string, { port }: { port: number }) => {
+    try {
+      root = resolve(root)
+      await preview(root, { port })
+    } catch (e) {
+      console.log(e)
     }
   })
 
