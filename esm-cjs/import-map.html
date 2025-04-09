@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.2.0?dev",
+      "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime?dev",
+      "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev"
+    }
+  }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="module">
+    import { createRoot } from 'react-dom/client';
+    import { jsx } from 'react/jsx-runtime';
+
+    function App () {
+      return jsx('div', {
+        children: [
+          jsx('h1', { children: 'Hello World' }),
+          jsx('p', { children: 'JSX working!' })
+        ]
+      });
+    }
+
+    createRoot(document.getElementById('root')).render(jsx(App, {}));
+  </script>
+</body>
+
+</html>
