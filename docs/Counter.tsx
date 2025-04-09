@@ -1,6 +1,6 @@
 import {useState} from 'react';
 
-export default function Counter() {
+export  function Counter(props:{__island:boolean}) {
   const [ count, setCount ] = useState(0);
   return (
     <div>
@@ -9,3 +9,5 @@ export default function Counter() {
     </div>
   );
 }
+
+export default Counter

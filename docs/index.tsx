@@ -4,7 +4,7 @@ export default function Index() {
   return (
     <div>
       hello world
-      <Counter />
+      <Counter __island/>
     </div>
   )
 }
