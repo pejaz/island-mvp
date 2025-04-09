@@ -32,7 +32,7 @@ export async function bundle(root: string, config: SiteConfig) {
       ssr: isServer,
       outDir: isServer ? join(root, '.temp') : join(root, CLIENT_OUTPUT),
       rollupOptions: {
-        treeshake: false, // work build css module to bundle asset
+        // treeshake: false, // work build css module to bundle asset
         input: isServer ? SERVER_ENTRY_PATH : CLIENT_ENTRY_PATH,
         output: {
           format: isServer ? 'cjs' : 'esm',
