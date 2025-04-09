@@ -16,8 +16,7 @@ export async function render(pagePath: string): Promise<ssrRenderReturn> {
   // 生产 pageData
   const pageData = await initPageData(pagePath)
   const { clearIslandData, data } = await import('./jsx-runtime')
-  // 拿到 islands 组件相关数据
-  const { islandProps, islandToPathMap } = data
+
   clearIslandData()
 
   const appHtml = renderToString(
@@ -27,6 +26,8 @@ export async function render(pagePath: string): Promise<ssrRenderReturn> {
       </StaticRouter>
     </DataContext.Provider>
   )
+  // 拿到 islands 组件相关数据
+  const { islandProps, islandToPathMap } = data
 
   return {
     appHtml,

@@ -40,7 +40,7 @@ export async function resolveUserConfig(
   )
 
   if (result) {
-    console.log('>_<： ~ result:', result)
+    // console.log('>_<： ~ result:', result)
     const { config: rawConfig = {} as RawConfig, dependencies } = result
     // 三种情况:
     // 1. object

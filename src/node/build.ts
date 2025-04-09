@@ -6,7 +6,9 @@ import { SiteConfig } from 'shared/types'
 import { InlineConfig, build as viteBuild } from 'vite'
 import {
   CLIENT_ENTRY_PATH,
+  EXTERNALS,
   MASK_SPLITTER,
+  PACKAGE_ROOT,
   SERVER_ENTRY_PATH,
 } from './constants'
 import { createVitePlugins } from './vitePlugins'
@@ -26,13 +28,16 @@ export async function bundle(root: string, config: SiteConfig) {
       noExternal: ['react-router-dom', 'lodash-es'],
     },
     build: {
+      minify: false,
       ssr: isServer,
       outDir: isServer ? join(root, '.temp') : join(root, CLIENT_OUTPUT),
       rollupOptions: {
+        treeshake: false,
         input: isServer ? SERVER_ENTRY_PATH : CLIENT_ENTRY_PATH,
         output: {
           format: isServer ? 'cjs' : 'esm',
         },
+        external: EXTERNALS,
       },
     },
   })
@@ -56,12 +61,24 @@ export async function bundle(root: string, config: SiteConfig) {
     ])
 
     spinner.succeed('Build client + server bundles successfully!')
+
+    // 复制 public 目录到输出目录，避免静态资源缺失，新版本 viteBuild 会自动处理，忽略
+    // const publicDir = join(root, 'public')
+    // if (await fs.pathExists(publicDir)) {
+    //   await fs.copy(publicDir, join(root, CLIENT_OUTPUT))
+    // }
+
+    // 复制 vendors 目录到输出目录
+    await fs.copy(join(PACKAGE_ROOT, 'vendors'), join(root, CLIENT_OUTPUT))
     return [clientBundle, serverBundle] as [RollupOutput, RollupOutput]
   } catch (error) {
     spinner.fail('Build client + server bundles failed!')
     console.log(error)
   }
 }
+
+const normalizeVendorFilename = (fileName: string) =>
+  fileName.replace(/\//g, '_') + '.js'
 
 export async function renderPage(
   render: (path: string) => Promise<ssrRenderReturn>,
@@ -75,52 +92,58 @@ export async function renderPage(
   const styleAssets = clientBundle.output.filter(
     (chunk) => chunk.type === 'asset' && chunk.fileName.endsWith('.css')
   )
-  await Promise.all(
-    routes.map(async (route) => {
-      const routePath = route.path
-      const { appHtml, islandToPathMap, islandProps } = await render(routePath)
-      const islandBundle = await buildIslands(root, islandToPathMap)
-      // 也可以通过产物的 fileName 属性来注入
-      const islandsCode = (islandBundle as RollupOutput).output[0].code
-      const html = `
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>title</title>
-      <meta name="description" content="xxx">
-      ${styleAssets
-        .map((item) => `<link rel="stylesheet" href="/${item.fileName}">`)
-        .join('\n')}
-    </head>
-    <body>
-      <div id="root">${appHtml}</div>
-       <script type="module">${islandsCode}</script>
-      <script type="module" src="/${clientChunk?.fileName}"></script>
-      <script id="island-props">${JSON.stringify(islandProps)}</script>
-    </body>
-  </html>`.trim()
+  const tasks = routes.map((route) => async () => {
+    const routePath = route.path
+    const {
+      appHtml,
+      islandToPathMap,
+      islandProps = [],
+    } = await render(routePath)
+    const islandBundle = await buildIslands(root, islandToPathMap)
+    // 也可以通过产物的 fileName 属性来注入
+    const islandsCode = (islandBundle as RollupOutput).output[0].code
+    const html = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>title</title>
+    <meta name="description" content="xxx">
+    ${styleAssets
+      .map((item) => `<link rel="stylesheet" href="/${item.fileName}">`)
+      .join('\n')}
+  </head>
+  <body>
+    <div id="root">${appHtml}</div>
+     <script type="module">${islandsCode}</script>
+    <script type="module" src="/${clientChunk?.fileName}"></script>
+    <script id="island-props">${JSON.stringify(islandProps)}</script>
+    <script type="importmap">
+      {
+        "imports": {
+          ${EXTERNALS.map(
+            (name) => `"${name}": "/${normalizeVendorFilename(name)}"`
+          ).join(',')}
+        }
+      }
+    </script>
+  </body>
+</html>`.trim()
 
-      const fileName = routePath.endsWith('/')
-        ? `${routePath}index.html`
-        : `${routePath}.html`
-      await fs.ensureDir(join(root, CLIENT_OUTPUT, dirname(fileName)))
-      await fs.writeFile(join(root, CLIENT_OUTPUT, fileName), html)
-    })
-  )
+    const fileName = routePath.endsWith('/')
+      ? `${routePath}index.html`
+      : `${routePath}.html`
+    await fs.ensureDir(join(root, CLIENT_OUTPUT, dirname(fileName)))
+    await fs.writeFile(join(root, CLIENT_OUTPUT, fileName), html)
+  })
 
-  // await fs.remove(join(root, '.temp'))
-}
+  for await (const task of tasks) {
+    await task()
+  }
 
-export async function build(root: string = process.cwd(), config: SiteConfig) {
-  // 1. bundle -> client 端 + server 端
-  const [clientBundle] = await bundle(root, config)
-  // 2. 引入 ssr-entry 服务端模块
-  const serverEntryPath = join(root, '.temp/ssr-entry.js')
-  // 3. 服务端渲染，产出 HTML String -> fs  HTML 产物输出到磁盘
-  const { render, routes } = await import(serverEntryPath)
-  await renderPage(render, routes, root, clientBundle)
+  await fs.remove(join(root, '.temp'))
+  await fs.remove(join(root, 'vendors'))
 }
 
 /**
@@ -129,7 +152,8 @@ export async function build(root: string = process.cwd(), config: SiteConfig) {
  * import { Aside } from 'xxx'
  * window.ISLANDS = { Aside }
  * window.ISLAND_PROPS = JSON.parse(
- *   document.getElementById('island-props').textContent
+ *   document.getElementById('island-props').textContent // island 组件上的 props数组，通过 index索引 获取
+ * )
  */
 async function buildIslands(
   root: string,
@@ -151,11 +175,15 @@ window.ISLAND_PROPS = JSON.parse(
   const injectId = 'island:inject'
   return viteBuild({
     mode: 'production',
+    esbuild: {
+      jsx: 'automatic',
+    },
     build: {
       // 输出目录
       outDir: path.join(root, '.temp'),
       rollupOptions: {
         input: injectId,
+        external: EXTERNALS,
       },
     },
     plugins: [
@@ -189,4 +217,14 @@ window.ISLAND_PROPS = JSON.parse(
       },
     ],
   })
+}
+
+export async function build(root: string = process.cwd(), config: SiteConfig) {
+  // 1. bundle -> client 端 + server 端
+  const [clientBundle] = await bundle(root, config)
+  // 2. 引入 ssr-entry 服务端模块
+  const serverEntryPath = join(root, '.temp/ssr-entry.js')
+  // 3. 服务端渲染，产出 HTML String -> fs  HTML 产物输出到磁盘
+  const { render, routes } = await import(serverEntryPath)
+  await renderPage(render, routes, root, clientBundle)
 }

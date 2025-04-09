@@ -23,6 +23,8 @@ const internalJsx = (jsx, type, props, ...args) => {
     data['islandToPathMap'][id] = props.__island
 
     delete props.__island
+
+    // 为 island 组件创建一个 div 容器，同时注入 __island= '[组件名称]:[组件props的索引]' 的属性
     return jsx('div', {
       __island: `${id}:${data.islandProps.length - 1}`,
       children: jsx(type, props, ...args),

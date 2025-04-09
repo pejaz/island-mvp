@@ -6,7 +6,8 @@
   "scripts": {
     "start": "tsup --watch",
     "start:tsc": "tsc -w",
-    "build": "tsup",
+    "build": "tsup && pnpm build:deps",
+    "build:deps": "tsx ./scripts/prebundle.ts",
     "prepare": "husky",
     "lint": "eslint --fix --ext .ts,.tsx,.js,.jsx ./",
     "preview": "cd docs/build && serve .",
@@ -32,6 +33,7 @@
     "@types/mdast": "^4.0.4",
     "@types/node": "^22.13.10",
     "@types/react": "^19.1.0",
+    "@types/resolve": "^1.20.6",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
     "@vitest/ui": "^3.0.9",
@@ -46,6 +48,7 @@
     "remark-mdx": "^3.1.0",
     "remark-stringify": "^11.0.0",
     "rollup": "^4.37.0",
+    "rollup-plugin-visualizer": "^5.14.0",
     "sass": "^1.86.2",
     "tsup": "^8.4.0",
     "tsx": "^4.19.3",
@@ -64,6 +67,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "acorn": "^8.14.1",
     "cac": "^6.7.14",
+    "esbuild": "^0.25.2",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.5",
     "fast-glob": "^3.3.3",
@@ -75,6 +79,7 @@
     "prettier": "^3.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-helmet-async": "^2.0.5",
     "react-router-dom": "^7.4.0",
     "rehype-autolink-headings": "^7.1.0",
     "rehype-slug": "^6.0.0",
@@ -84,11 +89,12 @@
     "remark-mdx-frontmatter": "^5.1.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.1",
+    "resolve": "^1.22.10",
     "shiki": "^3.2.1",
     "sirv": "^3.0.1",
     "unified": "^11.0.5",
     "unocss": "66.1.0-beta.8",
-    "vite": "^6.2.2"
+    "vite": "^6.2.5"
   },
   "bin": {
     "island": "bin/island.js"
