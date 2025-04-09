@@ -132,10 +132,7 @@ export async function renderPage(
   </head>
   <body>
     <div id="root">${appHtml}</div>
-     <script type="module">${islandsCode}</script>
-    <script type="module" src="/${clientChunk?.fileName}"></script>
-    <script id="island-props">${JSON.stringify(islandProps)}</script>
-    <script type="importmap">
+     <script type="importmap">
       {
         "imports": {
           ${EXTERNALS.map(
@@ -144,6 +141,9 @@ export async function renderPage(
         }
       }
     </script>
+     <script type="module">${islandsCode}</script>
+    <script type="module" src="/${clientChunk?.fileName}"></script>
+    <script id="island-props">${JSON.stringify(islandProps)}</script>
   </body>
 </html>`.trim()
 
