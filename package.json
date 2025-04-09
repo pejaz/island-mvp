@@ -14,7 +14,9 @@
     "test:unit": "vitest",
     "test:e2e": "playwright test",
     "test:ui": "vitest --ui",
-    "prepare:e2e": "tsx scripts/prepare-e2e.ts"
+    "prepare:e2e": "tsx scripts/prepare-e2e.ts",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s",
+    "release": "tsx ./scripts/release.ts"
   },
   "keywords": [],
   "author": "",
@@ -37,19 +39,24 @@
     "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
     "@vitest/ui": "^3.0.9",
+    "chalk": "^5.4.1",
     "commitlint": "^19.8.0",
+    "conventional-changelog-cli": "^5.0.0",
+    "enquirer": "^2.4.1",
     "eslint": "^9.23.0",
     "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "execa": "^9.1.0",
     "jiti": "^2.4.2",
     "lint-staged": "^15.5.0",
+    "minimist": "^1.2.8",
     "ora": "^8.2.0",
     "remark-mdx": "^3.1.0",
     "remark-stringify": "^11.0.0",
     "rollup": "^4.37.0",
     "rollup-plugin-visualizer": "^5.14.0",
     "sass": "^1.86.2",
+    "semver": "^7.7.1",
     "tsup": "^8.4.0",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
@@ -105,5 +112,13 @@
     "**/*.{js,jsx,tsx,ts}": [
       "npm run lint"
     ]
-  }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "src/runtime",
+    "src/theme-default",
+    "src/shared"
+  ]
 }
